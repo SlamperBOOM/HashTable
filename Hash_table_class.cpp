@@ -114,28 +114,20 @@ void Hash_Table::Insert(Key name, Value data)
 {
 	if (usedplaces >= hashtablesize * 0.75)
 	{
-		DoubleSizeHashTable();
+		DoubleHashTableSize();
 	}
 	keys[usedplaces] = name;
-	indexes[usedplaces] = CalcHash(name, hashtablesize);
-	std::cout << indexes[usedplaces] << std::endl;
+	indexes[usedplaces] = CalcHash(name, hashtable, hashtablesize);
 	hashtable[indexes[usedplaces]] = data;
 	usedplaces++;
 }
 
 void Hash_Table::Insert(Key name, int age, std::string phonenumber)
 {
-	if (usedplaces >= hashtablesize * 0.75)
-	{
-		DoubleSizeHashTable();
-	}
-	keys[usedplaces] = name;
-	indexes[usedplaces] = CalcHash(name, hashtablesize);
 	Value person;
 	person.age = age;
 	person.phonenumber = phonenumber;
-	hashtable[indexes[usedplaces]] = person;
-	usedplaces++;
+	Insert(name, person);
 }
 
 bool Hash_Table::Erase(Key name)
@@ -173,15 +165,26 @@ size_t Hash_Table::Find(Key name)
 	return -1;
 }
 
-size_t Hash_Table::CalcHash(Key name, size_t sizeoftable)
+size_t Hash_Table::CalcHash(Key name, Value* usinghashtable, size_t sizeoftable)
 {
-	size_t index = 0;
+	unsigned long long index = 0;
 	int length = name.length();
-	size_t  multiplier = 1;
+	unsigned long long  multiplier = 1;
 	for (int i = 0; i < length; i++)
 	{
 		index += (unsigned char)name[i] * multiplier;
 		multiplier *= 117;
+	}
+	bool yes = false;
+	while (true)
+	{
+		if (usinghashtable[index % hashtablesize].age == -1)
+		{
+			if (yes) collisioncount++;
+			break;
+		}
+		index++;
+		yes = true;
 	}
 	return index % sizeoftable;
 }
@@ -202,13 +205,9 @@ void Hash_Table::ResizeHashtable()
 {
 	Value* newhashtable = new Value[hashtablesize];
 	size_t* newindexes = new size_t[hashtablesize];
-	for (size_t i = 0; i < hashtablesize / 2; i++)
-	{
-		newhashtable[i] = hashtable[i];
-	}
 	for (size_t i = 0; i < usedplaces; i++)
 	{
-		newindexes[i] = CalcHash(keys[i], hashtablesize);
+		newindexes[i] = CalcHash(keys[i], newhashtable, hashtablesize);
 		newhashtable[newindexes[i]] = hashtable[indexes[i]];
 	}
 	delete[] hashtable;
@@ -217,7 +216,7 @@ void Hash_Table::ResizeHashtable()
 	indexes = newindexes;
 }
 
-void Hash_Table::DoubleSizeHashTable()
+void Hash_Table::DoubleHashTableSize()
 {
 	size_t size = hashtablesize;
 	if (size == 0)
@@ -226,23 +225,20 @@ void Hash_Table::DoubleSizeHashTable()
 	}
 	hashtablesize = size * 2;
 	ResizeKeys();
+	std::cout << "colissions: " << collisioncount << std::endl;
+	collisioncount = 0;
 }
 
 Value Hash_Table::GetData(Key name)
 {
-	size_t hashedkey = -1;
-	for (size_t i = 0; i < usedplaces; i++)
-	{
-		if (keys[i] == name)
-		{
-			hashedkey = indexes[i];
-			break;
-		}
-	}
-	if (hashedkey == -1)
+	size_t position = Find(name);
+	if (position == -1)
 	{
 		Person person;
 		return person;
 	}
-	return hashtable[hashedkey];
+	else
+	{
+		return hashtable[indexes[position]];
+	}
 }

@@ -19,7 +19,7 @@ int main()
     Hash_Table table = MakeNew();
     ifstream input;
     input.open("input.txt");
-    for (int i = 0; i < 75; i++)
+    for (int i = 0; i < 275; i++)
     {
         Person chel;
         chel.age = i;

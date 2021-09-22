@@ -59,16 +59,17 @@ private:
 	std::string* keys;
 	Value *hashtable;
 	size_t* indexes;
+	int collisioncount = 0;
 
 	size_t Find(Key name);
 	
-	size_t CalcHash(Key name, size_t sizeofhash);
+	size_t CalcHash(Key name, Value* hashtable, size_t sizeofhash);
 
 	void ResizeKeys();
 
 	void ResizeHashtable();
 
-	void DoubleSizeHashTable();
+	void DoubleHashTableSize();
 
 	Value GetData(Key name);
 };
