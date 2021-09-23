@@ -43,8 +43,8 @@ public:
 
 	bool Contains(Key name)
 	{
-		Value data = GetData(name);
-		return !(data.age == -1);
+		int index = Find(name);
+		return !(index == -1);
 	}
 
 	Value operator[](Key name)

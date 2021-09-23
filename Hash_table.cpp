@@ -29,5 +29,7 @@ int main()
         getline(input, name);
         table.Insert(name, chel);
     }
+    cout << table.Erase("Adam Hunter") << endl;
+    cout << table.Contains("Adam Hunter") << endl;
     input.close();
 }

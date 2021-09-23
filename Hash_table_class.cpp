@@ -137,7 +137,7 @@ bool Hash_Table::Erase(Key name)
 	{
 		return false;
 	}
-	size_t hash = indexes[Find(name)];
+	size_t hash = indexes[index];
 	hashtable[hash].age = -1;
 	hashtable[hash].phonenumber = "";
 	size_t i = 0;
@@ -148,6 +148,8 @@ bool Hash_Table::Erase(Key name)
 	while (i < usedplaces)
 	{
 		keys[i] = keys[i + 1];
+		indexes[i] = indexes[i + 1];
+		i++;
 	}
 	usedplaces--;
 	return true;
@@ -173,7 +175,7 @@ size_t Hash_Table::CalcHash(Key name, Value* usinghashtable, size_t sizeoftable)
 	for (int i = 0; i < length; i++)
 	{
 		index += (unsigned char)name[i] * multiplier;
-		multiplier *= 117;
+		multiplier *= 37;
 	}
 	bool yes = false;
 	while (true)
