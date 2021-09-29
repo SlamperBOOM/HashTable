@@ -26,7 +26,7 @@ Hash_Table::Hash_Table(const Hash_Table& table)
 	}
 }
 
-Hash_Table::Hash_Table(Hash_Table&& table)
+Hash_Table::Hash_Table(Hash_Table&& table) noexcept
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
@@ -60,7 +60,7 @@ Hash_Table& Hash_Table::operator=(const Hash_Table& table)
 	return *this;
 }
 
-Hash_Table& Hash_Table::operator=(Hash_Table&& table)
+Hash_Table& Hash_Table::operator=(Hash_Table&& table) noexcept
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
@@ -83,31 +83,21 @@ Hash_Table::~Hash_Table()
 	delete[] indexes;
 }
 
-void Hash_Table::swap(Hash_Table& table)
+void Hash_Table::Swap(Hash_Table& table)
 {
 	Hash_Table a = table;
-	table.hashtablesize = this->hashtablesize;
-	table.usedplaces = this->usedplaces;
-	table.keys = this->keys;
-	table.indexes = this->indexes;
-	table.hashtable = this->hashtable;
-
-	this->hashtablesize = a.hashtablesize;
-	this->usedplaces = a.usedplaces;
-	this->keys = a.keys;
-	this->indexes = a.indexes;
-	this->hashtable = a.hashtable;
+	table = *this;
+	*this = a;
 }
 
 void Hash_Table::Clear()
 {
-	delete[] hashtable;
-	delete[] keys;
-	delete[] indexes;
+	Hash_Table::~Hash_Table();
 	hashtablesize = 100;
-	hashtable = new Value[hashtablesize];
 	keys = new std::string[hashtablesize];
+	hashtable = new Value[hashtablesize];
 	indexes = new size_t[hashtablesize];
+	usedplaces = 0;
 }
 
 void Hash_Table::Insert(Key name, Value data)
@@ -153,6 +143,28 @@ bool Hash_Table::Erase(Key name)
 	}
 	usedplaces--;
 	return true;
+}
+
+Value& Hash_Table::At(const Key name)
+{
+	size_t index = Find(name);
+	if (index == -1)
+	{
+
+	}
+	Value& data = hashtable[indexes[index]];
+	return data;
+}
+
+const Value& Hash_Table::At(Key name) const
+{
+	/*size_t index = Find(name);
+	if (index == -1)
+	{
+
+	}
+	const Value& data = hashtable[indexes[index]];
+	return data;*/
 }
 
 size_t Hash_Table::Find(Key name)
@@ -231,7 +243,7 @@ void Hash_Table::DoubleHashTableSize()
 	collisioncount = 0;
 }
 
-Value Hash_Table::GetData(Key name)
+Value& Hash_Table::GetData(Key name)
 {
 	size_t position = Find(name);
 	if (position == -1)
@@ -243,4 +255,39 @@ Value Hash_Table::GetData(Key name)
 	{
 		return hashtable[indexes[position]];
 	}
+}
+
+bool operator==(const Hash_Table& a, const Hash_Table& b)
+{
+	if (a.hashtablesize != b.hashtablesize)
+	{
+		return false;
+	}
+	if (a.usedplaces != b.usedplaces)
+	{
+		return false;
+	}
+	for (size_t i = 0; i < a.usedplaces; i++)
+	{
+		if (a.keys[i] != b.keys[i])
+		{
+			return false;
+		}
+		Value a1 = a.hashtable[a.indexes[i]];
+		Value b1 = b.hashtable[b.indexes[i]];
+		if (a1.age != b1.age)
+		{
+			return false;
+		}
+		if (a1.phonenumber != b1.phonenumber)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool operator!=(const Hash_Table& a, const Hash_Table& b)
+{
+	return !(a == b);
 }

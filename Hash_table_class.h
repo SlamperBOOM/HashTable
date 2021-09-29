@@ -15,14 +15,14 @@ class Hash_Table
 public:
 	Hash_Table();
 	Hash_Table(const Hash_Table& table);
-	Hash_Table(Hash_Table&& table);
+	Hash_Table(Hash_Table&& table) noexcept;
 
 	Hash_Table& operator=(const Hash_Table& table);
-	Hash_Table& operator=(Hash_Table&& table);
+	Hash_Table& operator=(Hash_Table&& table) noexcept;
 
 	~Hash_Table();
 
-	void swap(Hash_Table& b);
+	void Swap(Hash_Table& b);
 
 	void Clear();
 
@@ -47,11 +47,18 @@ public:
 		return !(index == -1);
 	}
 
-	Value operator[](Key name)
+	Value& operator[](Key name)
 	{
 		Value data = GetData(name);
 		return data;
 	}
+
+	Value& At(const Key name);
+	const Value& At(const Key name) const;
+
+
+	friend bool operator==(const Hash_Table& a, const Hash_Table& b);
+	friend bool operator!=(const Hash_Table& a, const Hash_Table& b);
 
 private:
 	size_t hashtablesize;
@@ -71,6 +78,6 @@ private:
 
 	void DoubleHashTableSize();
 
-	Value GetData(Key name);
+	Value& GetData(Key name);
 };
 
