@@ -29,7 +29,11 @@ int main()
         getline(input, name);
         table.Insert(name, chel);
     }
+    Hash_Table table1 = table;
+    //table1.Swap(table);
+    cout << (table1 == table) << endl;
     cout << table.Erase("Adam Hunter") << endl;
     cout << table.Contains("Adam Hunter") << endl;
+    table1.Clear();
     input.close();
 }
