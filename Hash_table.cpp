@@ -8,9 +8,7 @@ using namespace std;
 Hash_Table MakeNew()
 {
     Hash_Table table;
-    Person person;
-    person.age = 10;
-    person.phonenumber = "8800";
+    Person person(10, "8800");
     table.Insert("Fedor", person);
     return table;
 }
@@ -34,6 +32,11 @@ int main()
     cout << (table1 == table) << endl;
     cout << table.Erase("Adam Hunter") << endl;
     cout << table.Contains("Adam Hunter") << endl;
+    cout << table.At("Adam Hunter").age << endl;
+    string name1 = "Fedor";
+    cout << table.At(name1).age << endl;
     table1.Clear();
+
+    Hash_Table::iterator it = table.Begin();
     input.close();
 }
