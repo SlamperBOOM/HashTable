@@ -145,31 +145,49 @@ bool Hash_Table::Erase(Key name)
 	return true;
 }
 
-Value& Hash_Table::At(const Key name)
+Value& Hash_Table::At(Key& name)
 {
 	size_t index = Find(name);
-	if (index == -1)
+	try
 	{
+		if (index == -1)
+		{
+			throw 1;
+		}
 
+	}
+	catch (int)
+	{
+		std::cerr << "There is no value by key: " << name << std::endl;
+		return defaultvalue;
 	}
 	Value& data = hashtable[indexes[index]];
 	return data;
 }
 
-const Value& Hash_Table::At(Key name) const
+const Value& Hash_Table::At(const Key& name) const
 {
-	/*size_t index = Find(name);
-	if (index == -1)
+	size_t index = Find(name);
+	try
 	{
+		if (index == -1)
+		{
+			throw 1;
+		}
 
 	}
+	catch (int)
+	{
+		std::cerr << "There is no value by key: " << name << std::endl;
+		return defaultvalue;
+	}
 	const Value& data = hashtable[indexes[index]];
-	return data;*/
+	return data;
 }
 
-size_t Hash_Table::Find(Key name)
+size_t Hash_Table::Find(Key& name)
 {
-	for (size_t i = 0; i < usedplaces; i++)
+	for (size_t i = 0; i < usedplaces; ++i)
 	{
 		if (keys[i] == name)
 		{
@@ -179,7 +197,19 @@ size_t Hash_Table::Find(Key name)
 	return -1;
 }
 
-size_t Hash_Table::CalcHash(Key name, Value* usinghashtable, size_t sizeoftable)
+size_t Hash_Table::Find(const Key& name) const
+{
+	for (size_t i = 0; i < usedplaces; ++i)
+	{
+		if (keys[i] == name)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+size_t Hash_Table::CalcHash(Key& name, Value* usinghashtable, size_t sizeoftable)
 {
 	unsigned long long index = 0;
 	int length = name.length();
@@ -243,18 +273,22 @@ void Hash_Table::DoubleHashTableSize()
 	collisioncount = 0;
 }
 
-Value& Hash_Table::GetData(Key name)
+Value& Hash_Table::GetData(const Key& name)
 {
 	size_t position = Find(name);
 	if (position == -1)
 	{
-		Person person;
-		return person;
+		return defaultvalue;
 	}
 	else
 	{
 		return hashtable[indexes[position]];
 	}
+}
+
+Value& Hash_Table::GetData(const size_t& position)
+{
+	return hashtable[indexes[position]];
 }
 
 bool operator==(const Hash_Table& a, const Hash_Table& b)
@@ -290,4 +324,39 @@ bool operator==(const Hash_Table& a, const Hash_Table& b)
 bool operator!=(const Hash_Table& a, const Hash_Table& b)
 {
 	return !(a == b);
+}
+
+void Hash_Table::iterator::operator++()
+{
+	index++;
+}
+
+void Hash_Table::iterator::operator--()
+{
+	index--;
+}
+
+void Hash_Table::iterator::operator+(int a)
+{
+	index = index + a;
+}
+
+void Hash_Table::iterator::operator-(int a)
+{
+	index = index - a;
+}
+
+void Hash_Table::iterator::operator+=(int a)
+{
+	index += a;
+}
+
+void Hash_Table::iterator::operator-=(int a)
+{
+	index -= a;
+}
+
+Value& Hash_Table::iterator::operator*()
+{
+	
 }

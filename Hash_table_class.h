@@ -3,7 +3,16 @@
 
 typedef struct Person
 {
-	int age = -1;
+	Person()
+	{
+		age = -1;
+	}
+	Person(int a, std::string b)
+	{
+		age = a;
+		phonenumber = b;
+	}
+	int age;
 	std::string phonenumber;
 }Person;
 
@@ -13,6 +22,44 @@ typedef Person Value;
 class Hash_Table
 {
 public:
+	class iterator 
+	{
+	public:
+
+		iterator()
+		{
+			index = 0;
+		}
+		iterator(int a)
+		{
+			index = a;
+		}
+		iterator(const iterator& it)
+		{
+			index = it.index;
+		}
+		iterator(iterator&& it)
+		{
+			index = it.index;
+		}
+
+		void operator++();
+		void operator--();
+
+		void operator+(int a);
+		void operator-(int a);
+
+		void operator+=(int a);
+		void operator-=(int a);
+
+		Value& operator*();
+
+	private:
+		size_t index;
+
+		Value& GetDataFromClass(int a);
+	};
+
 	Hash_Table();
 	Hash_Table(const Hash_Table& table);
 	Hash_Table(Hash_Table&& table) noexcept;
@@ -47,18 +94,28 @@ public:
 		return !(index == -1);
 	}
 
-	Value& operator[](Key name)
+	Value& operator[](const Key& name)
 	{
-		Value data = GetData(name);
+		Value& data = GetData(name);
 		return data;
 	}
 
-	Value& At(const Key name);
-	const Value& At(const Key name) const;
-
+	Value& At(Key& name);
+	const Value& At(const Key& name) const;
 
 	friend bool operator==(const Hash_Table& a, const Hash_Table& b);
 	friend bool operator!=(const Hash_Table& a, const Hash_Table& b);
+
+
+	iterator Begin()
+	{
+		return iterator(0);
+	}
+
+	iterator End()
+	{
+		return iterator(usedplaces);
+	}
 
 private:
 	size_t hashtablesize;
@@ -66,11 +123,14 @@ private:
 	std::string* keys;
 	Value *hashtable;
 	size_t* indexes;
+	Value defaultvalue;
+	const Value defaultconstvalue;
 	int collisioncount = 0;
 
-	size_t Find(Key name);
+	size_t Find(Key& name);
+	size_t Find(const Key& name) const;
 	
-	size_t CalcHash(Key name, Value* hashtable, size_t sizeofhash);
+	size_t CalcHash(Key& name, Value* hashtable, size_t sizeofhash);
 
 	void ResizeKeys();
 
@@ -78,6 +138,8 @@ private:
 
 	void DoubleHashTableSize();
 
-	Value& GetData(Key name);
+	Value& GetData(const Key& name);
+
+	Value& GetData(const size_t& position);
 };
 
