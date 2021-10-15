@@ -25,26 +25,54 @@ public:
 	class iterator 
 	{
 	public:
-
 		iterator()
 		{
 			index = 0;
+			table = nullptr;
 		}
-		iterator(int a)
+		iterator(int a, Hash_Table* table1)
 		{
-			index = a;
+			this->index = a;
+			this->table = table1;
+		}
+		iterator(iterator& it)
+		{
+			this->index = it.index;
+			this->table = it.table;
 		}
 		iterator(const iterator& it)
 		{
-			index = it.index;
+			this->index = it.index;
+			this->table = it.table;
 		}
-		iterator(iterator&& it)
+		iterator(iterator&& it) noexcept
 		{
-			index = it.index;
+			this->index = it.index;
+			this->table = it.table;
+		}
+		iterator& operator=(iterator& it)
+		{
+			this->index = it.index;
+			this->table = it.table;
+			return *this;
+		}
+		iterator& operator=(iterator&& it) noexcept
+		{
+			this->index = it.index;
+			this->table = it.table;
+			return *this;
 		}
 
-		void operator++();
-		void operator--();
+		iterator& operator++()
+		{
+			index++;
+			return *this;
+		}
+		iterator& operator--()
+		{
+			index--;
+			return *this;
+		}
 
 		void operator+(int a);
 		void operator-(int a);
@@ -56,8 +84,7 @@ public:
 
 	private:
 		size_t index;
-
-		Value& GetDataFromClass(int a);
+		Hash_Table* table;
 	};
 
 	Hash_Table();
@@ -109,12 +136,12 @@ public:
 
 	iterator Begin()
 	{
-		return iterator(0);
+		return iterator(0, this);
 	}
 
 	iterator End()
 	{
-		return iterator(usedplaces);
+		return iterator(usedplaces, this);
 	}
 
 private:
@@ -139,7 +166,4 @@ private:
 	void DoubleHashTableSize();
 
 	Value& GetData(const Key& name);
-
-	Value& GetData(const size_t& position);
 };
-

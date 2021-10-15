@@ -36,7 +36,5 @@ int main()
     string name1 = "Fedor";
     cout << table.At(name1).age << endl;
     table1.Clear();
-
-    Hash_Table::iterator it = table.Begin();
     input.close();
 }

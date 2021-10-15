@@ -286,11 +286,6 @@ Value& Hash_Table::GetData(const Key& name)
 	}
 }
 
-Value& Hash_Table::GetData(const size_t& position)
-{
-	return hashtable[indexes[position]];
-}
-
 bool operator==(const Hash_Table& a, const Hash_Table& b)
 {
 	if (a.hashtablesize != b.hashtablesize)
@@ -326,37 +321,8 @@ bool operator!=(const Hash_Table& a, const Hash_Table& b)
 	return !(a == b);
 }
 
-void Hash_Table::iterator::operator++()
-{
-	index++;
-}
-
-void Hash_Table::iterator::operator--()
-{
-	index--;
-}
-
-void Hash_Table::iterator::operator+(int a)
-{
-	index = index + a;
-}
-
-void Hash_Table::iterator::operator-(int a)
-{
-	index = index - a;
-}
-
-void Hash_Table::iterator::operator+=(int a)
-{
-	index += a;
-}
-
-void Hash_Table::iterator::operator-=(int a)
-{
-	index -= a;
-}
-
 Value& Hash_Table::iterator::operator*()
 {
-	
+	return table->hashtable[table->indexes[index]];
 }
+
