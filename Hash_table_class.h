@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <list>
 
 typedef struct Person
 {
@@ -12,81 +13,21 @@ typedef struct Person
 		age = a;
 		phonenumber = b;
 	}
+	friend bool operator==(const Person a, const Person b);
+	friend bool operator!=(const Person a, const Person b);
 	int age;
 	std::string phonenumber;
 }Person;
 
 typedef std::string Key;
 typedef Person Value;
+typedef std::pair<Key, Value> DataPair;
+typedef std::list<DataPair> Pairs;
+
 
 class Hash_Table
 {
 public:
-	class iterator 
-	{
-	public:
-		iterator()
-		{
-			index = 0;
-			table = nullptr;
-		}
-		iterator(int a, Hash_Table* table1)
-		{
-			this->index = a;
-			this->table = table1;
-		}
-		iterator(iterator& it)
-		{
-			this->index = it.index;
-			this->table = it.table;
-		}
-		iterator(const iterator& it)
-		{
-			this->index = it.index;
-			this->table = it.table;
-		}
-		iterator(iterator&& it) noexcept
-		{
-			this->index = it.index;
-			this->table = it.table;
-		}
-		iterator& operator=(iterator& it)
-		{
-			this->index = it.index;
-			this->table = it.table;
-			return *this;
-		}
-		iterator& operator=(iterator&& it) noexcept
-		{
-			this->index = it.index;
-			this->table = it.table;
-			return *this;
-		}
-
-		iterator& operator++()
-		{
-			index++;
-			return *this;
-		}
-		iterator& operator--()
-		{
-			index--;
-			return *this;
-		}
-
-		void operator+(int a);
-		void operator-(int a);
-
-		void operator+=(int a);
-		void operator-=(int a);
-
-		Value& operator*();
-
-	private:
-		size_t index;
-		Hash_Table* table;
-	};
-
 	Hash_Table();
 	Hash_Table(const Hash_Table& table);
 	Hash_Table(Hash_Table&& table) noexcept;
@@ -100,10 +41,9 @@ public:
 
 	void Clear();
 
-	void Insert(Key name, Value data);
-	void Insert(Key name, int age, std::string phonenumber);
+	void Insert(const Key& name, Value& data);
 
-	bool Erase(Key name);
+	bool Erase(const Key& name);
 
 	bool Empty()
 	{
@@ -115,55 +55,26 @@ public:
 		return usedplaces;
 	}
 
-	bool Contains(Key name)
-	{
-		int index = Find(name);
-		return !(index == -1);
-	}
+	bool Contains(const Key& name);
 
-	Value& operator[](const Key& name)
-	{
-		Value& data = GetData(name);
-		return data;
-	}
+	DataPair& operator[](const Key& name);
 
-	Value& At(Key& name);
-	const Value& At(const Key& name) const;
+	DataPair& At(Key& name);
+	const DataPair& At(const Key& name) const;
 
 	friend bool operator==(const Hash_Table& a, const Hash_Table& b);
 	friend bool operator!=(const Hash_Table& a, const Hash_Table& b);
 
-
-	iterator Begin()
-	{
-		return iterator(0, this);
-	}
-
-	iterator End()
-	{
-		return iterator(usedplaces, this);
-	}
-
 private:
 	size_t hashtablesize;
 	size_t usedplaces;
-	std::string* keys;
-	Value *hashtable;
-	size_t* indexes;
-	Value defaultvalue;
-	const Value defaultconstvalue;
-	int collisioncount = 0;
+	Pairs* hashtable;
 
-	size_t Find(Key& name);
-	size_t Find(const Key& name) const;
+	std::pair<size_t, Pairs::iterator> Find(const Key& name) const;
 	
-	size_t CalcHash(Key& name, Value* hashtable, size_t sizeofhash);
-
-	void ResizeKeys();
+	size_t CalcHash(const Key& name) const;
 
 	void ResizeHashtable();
 
 	void DoubleHashTableSize();
-
-	Value& GetData(const Key& name);
 };

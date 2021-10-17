@@ -1,13 +1,34 @@
 #include <string>
+#include <exception>
 #include <iostream>
 #include "Hash_table_class.h"
+
+bool operator==(const Person a, const Person b)
+{
+	if (a.age != b.age)
+	{
+		return false;
+	}
+	if (a.phonenumber != b.phonenumber)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool operator!=(const Person a, const Person b)
+{
+	return !(a == b);
+}
 
 Hash_Table::Hash_Table()
 {
 	hashtablesize = 100;
-	keys = new std::string[hashtablesize];
-	hashtable = new Value[hashtablesize];
-	indexes = new size_t[hashtablesize];
+	hashtable = new Pairs[hashtablesize];
+	for (size_t i = 0; i < hashtablesize; i++)
+	{
+		hashtable[i].push_back(DataPair());
+	}
 	usedplaces = 0;
 }
 
@@ -15,14 +36,10 @@ Hash_Table::Hash_Table(const Hash_Table& table)
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
-	this->keys = new std::string[hashtablesize];
-	this->hashtable = new Value[hashtablesize];
-	this->indexes = new size_t[hashtablesize];
-	for (size_t i = 0; i < hashtablesize; i++)
+	this->hashtable = new Pairs[this->hashtablesize];
+	for (size_t i = 0; i < this->hashtablesize; i++)
 	{
-		this->keys[i] = table.keys[i];
 		this->hashtable[i] = table.hashtable[i];
-		this->indexes[i] = table.indexes[i];
 	}
 }
 
@@ -30,32 +47,20 @@ Hash_Table::Hash_Table(Hash_Table&& table) noexcept
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
-	this->keys = table.keys;
 	this->hashtable = table.hashtable;
-	this->indexes = table.indexes;
 
-	table.hashtablesize = 0;
-	table.usedplaces = 0;
-	table.indexes = nullptr;
 	table.hashtable = nullptr;
-	table.keys = nullptr;
 }
 
 Hash_Table& Hash_Table::operator=(const Hash_Table& table)
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
-	delete[] this->keys;
-	this->keys = new std::string[hashtablesize];
 	delete[] this->hashtable;
-	this->hashtable = new Value[hashtablesize];
-	delete[] this->indexes;
-	this->indexes = new size_t[hashtablesize];
-	for (size_t i = 0; i < hashtablesize; i++)
+	this->hashtable = new Pairs[this->hashtablesize];
+	for (size_t i = 0; i < this->hashtablesize; i++)
 	{
-		this->keys[i] = table.keys[i];
 		this->hashtable[i] = table.hashtable[i];
-		this->indexes[i] = table.indexes[i];
 	}
 	return *this;
 }
@@ -64,152 +69,142 @@ Hash_Table& Hash_Table::operator=(Hash_Table&& table) noexcept
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
-	this->keys = table.keys;
+	delete[] this->hashtable;
 	this->hashtable = table.hashtable;
-	this->indexes = table.indexes;
 
-	table.hashtablesize = 0;
-	table.usedplaces = 0;
-	table.indexes = nullptr;
 	table.hashtable = nullptr;
-	table.keys = nullptr;
 	return *this;
 }
 
 Hash_Table::~Hash_Table()
 {
-	delete[] keys;
 	delete[] hashtable;
-	delete[] indexes;
 }
 
 void Hash_Table::Swap(Hash_Table& table)
 {
-	Hash_Table a = table;
-	table = *this;
-	*this = a;
+	std::swap(this->hashtablesize, table.hashtablesize);
+	std::swap(this->usedplaces, table.usedplaces);
+	std::swap(this->hashtable, table.hashtable);
 }
 
 void Hash_Table::Clear()
 {
-	Hash_Table::~Hash_Table();
+	for (size_t i = 0; i < hashtablesize; i++)
+	{
+		hashtable[i].clear();
+	}
+	delete[] hashtable;
 	hashtablesize = 100;
-	keys = new std::string[hashtablesize];
-	hashtable = new Value[hashtablesize];
-	indexes = new size_t[hashtablesize];
+	hashtable = new Pairs[hashtablesize];
+	for (size_t i = 0; i < hashtablesize; i++)
+	{
+		hashtable[i].push_back(DataPair());
+	}
 	usedplaces = 0;
 }
 
-void Hash_Table::Insert(Key name, Value data)
+void Hash_Table::Insert(const Key& name, Value& data)
 {
 	if (usedplaces >= hashtablesize * 0.75)
 	{
 		DoubleHashTableSize();
 	}
-	keys[usedplaces] = name;
-	indexes[usedplaces] = CalcHash(name, hashtable, hashtablesize);
-	hashtable[indexes[usedplaces]] = data;
+	size_t index = CalcHash(name);
+	DataPair pair = std::make_pair(name, data);
+	DataPair innerpair = *(hashtable[index].begin());
+	Value defaultvalue;
+	if (hashtable[index].size() == 1 && innerpair.second == defaultvalue)
+	{
+		hashtable[index].clear();
+	}
+	hashtable[index].push_back(pair);
 	usedplaces++;
 }
 
-void Hash_Table::Insert(Key name, int age, std::string phonenumber)
+bool Hash_Table::Erase(const Key& name)
 {
-	Value person;
-	person.age = age;
-	person.phonenumber = phonenumber;
-	Insert(name, person);
-}
-
-bool Hash_Table::Erase(Key name)
-{
-	size_t index = Find(name);
-	if (index == -1)
+	std::pair<size_t, Pairs::iterator> index = Find(name);
+	Pairs& list = hashtable[index.first];
+	DataPair pair = *(index.second);
+	if (pair.first != name)
 	{
 		return false;
 	}
-	size_t hash = indexes[index];
-	hashtable[hash].age = -1;
-	hashtable[hash].phonenumber = "";
-	size_t i = 0;
-	while (keys[i] != name)
+	list.erase(index.second);
+	if (list.size() == 0)
 	{
-		i++;
+		list.push_back(DataPair());
 	}
-	while (i < usedplaces)
-	{
-		keys[i] = keys[i + 1];
-		indexes[i] = indexes[i + 1];
-		i++;
-	}
-	usedplaces--;
 	return true;
 }
 
-Value& Hash_Table::At(Key& name)
+bool Hash_Table::Contains(const Key& name)
 {
-	size_t index = Find(name);
-	try
-	{
-		if (index == -1)
-		{
-			throw 1;
-		}
+	std::pair<size_t, Pairs::iterator> index = Find(name);
+	DataPair pair = *(index.second);
+	return pair.first == name;
+}
 
-	}
-	catch (int)
+DataPair& Hash_Table::operator[](const Key& name)
+{
+	std::pair<size_t, Pairs::iterator> index = Find(name); 
+	DataPair& pair = *(index.second);
+	if (pair.first != name)
 	{
-		std::cerr << "There is no value by key: " << name << std::endl;
-		return defaultvalue;
+		return *(hashtable[index.first].begin());
 	}
-	Value& data = hashtable[indexes[index]];
+	return pair;
+}
+
+DataPair& Hash_Table::At(Key& name)
+{
+	std::pair<size_t, Pairs::iterator> index = Find(name);
+	DataPair pair = *(index.second);
+	if (pair.first != name)
+	{
+		throw std::out_of_range("Out of range");
+	}
+	DataPair& data = *(index.second);
 	return data;
 }
 
-const Value& Hash_Table::At(const Key& name) const
+const DataPair& Hash_Table::At(const Key& name) const
 {
-	size_t index = Find(name);
-	try
+	std::pair<size_t, Pairs::iterator> index = Find(name);
+	DataPair pair = *(index.second);
+	if (pair.first != name)
 	{
-		if (index == -1)
-		{
-			throw 1;
-		}
-
+		throw std::out_of_range("Out of range");
 	}
-	catch (int)
-	{
-		std::cerr << "There is no value by key: " << name << std::endl;
-		return defaultvalue;
-	}
-	const Value& data = hashtable[indexes[index]];
+	const DataPair& data = *(index.second);
 	return data;
 }
 
-size_t Hash_Table::Find(Key& name)
+std::pair<size_t, Pairs::iterator> Hash_Table::Find(const Key& name) const
 {
-	for (size_t i = 0; i < usedplaces; ++i)
+	long index = CalcHash(name);
+	size_t size = hashtable[index].size();
+	auto it = hashtable[index].begin();
+	std::pair<Key, Value> pair = *(it);
+	if (size > 1 && pair.first != name)
 	{
-		if (keys[i] == name)
+		auto end = hashtable[index].end();
+		while (it != end)
 		{
-			return i;
+			it++;
+			pair = *(it);
+			if (pair.first == name)
+			{
+				break;
+			}
 		}
 	}
-	return -1;
+	std::pair<size_t, Pairs::iterator> indexpair = std::make_pair(index, it);
+	return indexpair;
 }
 
-size_t Hash_Table::Find(const Key& name) const
-{
-	for (size_t i = 0; i < usedplaces; ++i)
-	{
-		if (keys[i] == name)
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-
-size_t Hash_Table::CalcHash(Key& name, Value* usinghashtable, size_t sizeoftable)
+size_t Hash_Table::CalcHash(const Key& name) const
 {
 	unsigned long long index = 0;
 	int length = name.length();
@@ -219,45 +214,55 @@ size_t Hash_Table::CalcHash(Key& name, Value* usinghashtable, size_t sizeoftable
 		index += (unsigned char)name[i] * multiplier;
 		multiplier *= 37;
 	}
-	bool yes = false;
-	while (true)
-	{
-		if (usinghashtable[index % hashtablesize].age == -1)
-		{
-			if (yes) collisioncount++;
-			break;
-		}
-		index++;
-		yes = true;
-	}
-	return index % sizeoftable;
-}
-
-void Hash_Table::ResizeKeys()
-{
-	std::string* keysarray = new std::string[hashtablesize];
-	for (size_t i = 0; i < hashtablesize / 2; i++)
-	{
-		keysarray[i] = keys[i];
-	}
-	delete[] keys;
-	keys = keysarray;
-	ResizeHashtable();
+	return index % hashtablesize;
 }
 
 void Hash_Table::ResizeHashtable()
 {
-	Value* newhashtable = new Value[hashtablesize];
-	size_t* newindexes = new size_t[hashtablesize];
-	for (size_t i = 0; i < usedplaces; i++)
+	Pairs* newhashtable = new Pairs[hashtablesize];
+	for (size_t i = 0; i < hashtablesize; i++)
 	{
-		newindexes[i] = CalcHash(keys[i], newhashtable, hashtablesize);
-		newhashtable[newindexes[i]] = hashtable[indexes[i]];
+		newhashtable[i].push_back(DataPair());
+	}
+	for (size_t i = 0; i < hashtablesize / 2; i++)
+	{
+		if (hashtable[i].size() > 1)
+		{
+			auto end = hashtable[i].end();
+			for (auto it = hashtable[i].begin(); it != end; it++)
+			{
+				DataPair pair = *(it);
+				size_t index = CalcHash(pair.first);
+				if (newhashtable[index].size() == 1)
+				{
+					*(newhashtable[index].begin()) = pair;
+				}
+				else
+				{
+					newhashtable[index].push_back(pair);
+				}
+			}
+		}
+		else
+		{
+			DataPair pair = *(hashtable[i].begin());
+			size_t index = CalcHash(pair.first);
+			if (newhashtable[index].size() == 1)
+			{
+				*(newhashtable[index].begin()) = pair;
+			}
+			else
+			{
+				newhashtable[index].push_back(pair);
+			}
+		}
+	}
+	for (size_t i = 0; i < hashtablesize / 2; i++)
+	{
+		hashtable[i].clear();
 	}
 	delete[] hashtable;
 	hashtable = newhashtable;
-	delete[] indexes;
-	indexes = newindexes;
 }
 
 void Hash_Table::DoubleHashTableSize()
@@ -268,22 +273,7 @@ void Hash_Table::DoubleHashTableSize()
 		size = 1;
 	}
 	hashtablesize = size * 2;
-	ResizeKeys();
-	std::cout << "colissions: " << collisioncount << std::endl;
-	collisioncount = 0;
-}
-
-Value& Hash_Table::GetData(const Key& name)
-{
-	size_t position = Find(name);
-	if (position == -1)
-	{
-		return defaultvalue;
-	}
-	else
-	{
-		return hashtable[indexes[position]];
-	}
+	ResizeHashtable();
 }
 
 bool operator==(const Hash_Table& a, const Hash_Table& b)
@@ -296,21 +286,20 @@ bool operator==(const Hash_Table& a, const Hash_Table& b)
 	{
 		return false;
 	}
-	for (size_t i = 0; i < a.usedplaces; i++)
+	for (size_t i = 0; i < a.hashtablesize; i++)
 	{
-		if (a.keys[i] != b.keys[i])
+		if (a.hashtable[i].size() != b.hashtable[i].size())
 		{
 			return false;
 		}
-		Value a1 = a.hashtable[a.indexes[i]];
-		Value b1 = b.hashtable[b.indexes[i]];
-		if (a1.age != b1.age)
+		auto it_a = a.hashtable[i].begin();
+		auto it_b = b.hashtable[i].begin();
+		for (size_t j = 0; j < a.hashtable[i].size(); j++)
 		{
-			return false;
-		}
-		if (a1.phonenumber != b1.phonenumber)
-		{
-			return false;
+			if (*(it_a) != *(it_b))
+			{
+				return false;
+			}
 		}
 	}
 	return true;
@@ -320,9 +309,3 @@ bool operator!=(const Hash_Table& a, const Hash_Table& b)
 {
 	return !(a == b);
 }
-
-Value& Hash_Table::iterator::operator*()
-{
-	return table->hashtable[table->indexes[index]];
-}
-

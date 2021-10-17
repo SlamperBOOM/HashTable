@@ -15,6 +15,8 @@ Hash_Table MakeNew()
 int main()
 {
     Hash_Table table = MakeNew();
+    string name1 = "Fedor";
+    cout << table.At(name1).second.age << endl;
     ifstream input;
     input.open("input.txt");
     for (int i = 0; i < 275; i++)
@@ -28,13 +30,11 @@ int main()
         table.Insert(name, chel);
     }
     Hash_Table table1 = table;
-    //table1.Swap(table);
+    table1.Swap(table);
     cout << (table1 == table) << endl;
     cout << table.Erase("Adam Hunter") << endl;
     cout << table.Contains("Adam Hunter") << endl;
-    cout << table.At("Adam Hunter").age << endl;
-    string name1 = "Fedor";
-    cout << table.At(name1).age << endl;
+    //cout << table.At("Adam Hunter").second.age << endl;
     table1.Clear();
     input.close();
 }
