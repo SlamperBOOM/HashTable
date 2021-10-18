@@ -31,9 +31,10 @@ int main()
     }
     Hash_Table table1 = table;
     table1.Swap(table);
-    cout << (table1 == table) << endl;
+    cout << table["Adam Hunter"].second.phonenumber << endl;
     cout << table.Erase("Adam Hunter") << endl;
     cout << table.Contains("Adam Hunter") << endl;
+    cout << table["Adam Hunter"].second.phonenumber << endl;
     //cout << table.At("Adam Hunter").second.age << endl;
     table1.Clear();
     input.close();
