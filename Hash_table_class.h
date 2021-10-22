@@ -41,7 +41,7 @@ public:
 
 	void Clear();
 
-	void Insert(const Key& name, Value& data);
+	bool Insert(const Key& name, Value& data);
 
 	bool Erase(const Key& name);
 

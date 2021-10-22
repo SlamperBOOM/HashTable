@@ -25,10 +25,6 @@ Hash_Table::Hash_Table()
 {
 	hashtablesize = 100;
 	hashtable = new Pairs[hashtablesize];
-	for (size_t i = 0; i < hashtablesize; i++)
-	{
-		hashtable[i].push_back(DataPair());
-	}
 	usedplaces = 0;
 }
 
@@ -104,21 +100,19 @@ void Hash_Table::Clear()
 	usedplaces = 0;
 }
 
-void Hash_Table::Insert(const Key& name, Value& data)
+bool Hash_Table::Insert(const Key& name, Value& data)
 {
 	if (usedplaces >= hashtablesize * 0.75)
 	{
 		DoubleHashTableSize();
 	}
-	size_t index = CalcHash(name);
-	DataPair pair = std::make_pair(name, data);
-	DataPair innerpair = *(hashtable[index].begin());
-	Value defaultvalue;
-	if (hashtable[index].size() == 1 && innerpair.second == defaultvalue)
+	std::pair<size_t, Pairs::iterator> index = Find(name);
+	if (hashtable[index.first].end() == index.second)
 	{
-		hashtable[index].clear();
+		return false;
 	}
-	hashtable[index].push_back(pair);
+	DataPair pair = std::make_pair(name, data);
+	hashtable[index.first].push_back(pair);
 	usedplaces++;
 }
 
@@ -152,7 +146,8 @@ DataPair& Hash_Table::operator[](const Key& name)
 	DataPair& pair = *(index.second);
 	if (pair.first != name)
 	{
-		return *(hashtable[index.first].begin());
+		hashtable[index.first].push_back(DataPair());
+		return *(--hashtable[index.first].end());
 	}
 	return pair;
 }
