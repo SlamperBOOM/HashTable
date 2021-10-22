@@ -27,7 +27,7 @@ int main()
         chel.phonenumber += (char)(i + 1) * (i + 1);
         string name;
         getline(input, name);
-        table.Insert(name, chel);
+        cout << table.Insert(name, chel) << ' ' << name << endl;
     }
     Hash_Table table1 = table;
     table1.Swap(table);

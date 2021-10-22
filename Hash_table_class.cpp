@@ -45,6 +45,7 @@ Hash_Table::Hash_Table(Hash_Table&& table) noexcept
 	this->usedplaces = table.usedplaces;
 	this->hashtable = table.hashtable;
 
+	table.hashtablesize = 0;
 	table.hashtable = nullptr;
 }
 
@@ -52,6 +53,10 @@ Hash_Table& Hash_Table::operator=(const Hash_Table& table)
 {
 	this->hashtablesize = table.hashtablesize;
 	this->usedplaces = table.usedplaces;
+	for (size_t i = 0; i < hashtablesize; i++)
+	{
+		this->hashtable[i].clear();
+	}
 	delete[] this->hashtable;
 	this->hashtable = new Pairs[this->hashtablesize];
 	for (size_t i = 0; i < this->hashtablesize; i++)
@@ -74,6 +79,10 @@ Hash_Table& Hash_Table::operator=(Hash_Table&& table) noexcept
 
 Hash_Table::~Hash_Table()
 {
+	for (size_t i = 0; i < hashtablesize; i++)
+	{
+		hashtable[i].clear();
+	}
 	delete[] hashtable;
 }
 
@@ -93,10 +102,6 @@ void Hash_Table::Clear()
 	delete[] hashtable;
 	hashtablesize = 100;
 	hashtable = new Pairs[hashtablesize];
-	for (size_t i = 0; i < hashtablesize; i++)
-	{
-		hashtable[i].push_back(DataPair());
-	}
 	usedplaces = 0;
 }
 
@@ -107,21 +112,21 @@ bool Hash_Table::Insert(const Key& name, Value& data)
 		DoubleHashTableSize();
 	}
 	std::pair<size_t, Pairs::iterator> index = Find(name);
-	if (hashtable[index.first].end() == index.second)
+	if (hashtable[index.first].end() != index.second)
 	{
 		return false;
 	}
 	DataPair pair = std::make_pair(name, data);
 	hashtable[index.first].push_back(pair);
 	usedplaces++;
+	return true;
 }
 
 bool Hash_Table::Erase(const Key& name)
 {
 	std::pair<size_t, Pairs::iterator> index = Find(name);
 	Pairs& list = hashtable[index.first];
-	DataPair pair = *(index.second);
-	if (pair.first != name)
+	if (hashtable[index.first].end() == index.second)
 	{
 		return false;
 	}
@@ -136,27 +141,29 @@ bool Hash_Table::Erase(const Key& name)
 bool Hash_Table::Contains(const Key& name)
 {
 	std::pair<size_t, Pairs::iterator> index = Find(name);
-	DataPair pair = *(index.second);
-	return pair.first == name;
+	if (hashtable[index.first].end() == index.second)
+	{
+		return false;
+	}
+	return true;
 }
 
 DataPair& Hash_Table::operator[](const Key& name)
 {
 	std::pair<size_t, Pairs::iterator> index = Find(name); 
-	DataPair& pair = *(index.second);
-	if (pair.first != name)
+	if (hashtable[index.first].end() == index.second)
 	{
 		hashtable[index.first].push_back(DataPair());
 		return *(--hashtable[index.first].end());
 	}
+	DataPair& pair = *(index.second);
 	return pair;
 }
 
 DataPair& Hash_Table::At(Key& name)
 {
 	std::pair<size_t, Pairs::iterator> index = Find(name);
-	DataPair pair = *(index.second);
-	if (pair.first != name)
+	if (hashtable[index.first].end() == index.second)
 	{
 		throw std::out_of_range("Out of range");
 	}
@@ -167,8 +174,7 @@ DataPair& Hash_Table::At(Key& name)
 const DataPair& Hash_Table::At(const Key& name) const
 {
 	std::pair<size_t, Pairs::iterator> index = Find(name);
-	DataPair pair = *(index.second);
-	if (pair.first != name)
+	if (hashtable[index.first].end() == index.second)
 	{
 		throw std::out_of_range("Out of range");
 	}
@@ -181,18 +187,18 @@ std::pair<size_t, Pairs::iterator> Hash_Table::Find(const Key& name) const
 	long index = CalcHash(name);
 	size_t size = hashtable[index].size();
 	auto it = hashtable[index].begin();
-	std::pair<Key, Value> pair = *(it);
-	if (size > 1 && pair.first != name)
+	if (size > 0)
 	{
+		DataPair pair = *(it);
 		auto end = hashtable[index].end();
 		while (it != end)
 		{
-			it++;
 			pair = *(it);
 			if (pair.first == name)
 			{
 				break;
 			}
+			it++;
 		}
 	}
 	std::pair<size_t, Pairs::iterator> indexpair = std::make_pair(index, it);
@@ -215,13 +221,9 @@ size_t Hash_Table::CalcHash(const Key& name) const
 void Hash_Table::ResizeHashtable()
 {
 	Pairs* newhashtable = new Pairs[hashtablesize];
-	for (size_t i = 0; i < hashtablesize; i++)
-	{
-		newhashtable[i].push_back(DataPair());
-	}
 	for (size_t i = 0; i < hashtablesize / 2; i++)
 	{
-		if (hashtable[i].size() > 1)
+		if (hashtable[i].size() > 0)
 		{
 			auto end = hashtable[i].end();
 			for (auto it = hashtable[i].begin(); it != end; it++)
@@ -237,7 +239,7 @@ void Hash_Table::ResizeHashtable()
 					newhashtable[index].push_back(pair);
 				}
 			}
-		}
+		}/*
 		else
 		{
 			DataPair pair = *(hashtable[i].begin());
@@ -250,7 +252,7 @@ void Hash_Table::ResizeHashtable()
 			{
 				newhashtable[index].push_back(pair);
 			}
-		}
+		}*/
 	}
 	for (size_t i = 0; i < hashtablesize / 2; i++)
 	{
